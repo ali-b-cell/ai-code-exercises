@@ -1,0 +1,419 @@
+
+Slide 1: Introduction (30 seconds)
+┌─────────────────────────────────────────┐
+│   Understanding the Task Manager        │
+│                                         │
+│   A Journey Through Code with AI        │
+│                                         │
+│   by Weiwei                             │
+└─────────────────────────────────────────┘
+
+Opening:
+"Today I'll share how I used AI to understand an existing codebase - 
+a Python task management system. Instead of just reading the code, 
+I mapped how data flows, discovered design patterns, and learned 
+the 'why' behind architectural decisions."
+
+Slide 2: High-Level Architecture (1 minute)
+┌─────────────────────────────────────────────────────────┐
+│         APPLICATION ARCHITECTURE                        │
+│                                                         │
+│    👤 User (CLI)                                        │
+│         ↓                                               │
+│    🖥️  Presentation Layer (cli.py)                     │
+│         ↓                                               │
+│    🧠 Business Logic (TaskManager)                     │
+│         ↓                                               │
+│    📦 Domain Model (Task)                              │
+│         ↓                                               │
+│    💾 Data Access (TaskStorage)                        │
+│         ↓                                               │
+│    💿 Persistence (tasks.json)                         │
+│                                                         │
+│   4-Layer Architecture                                  │
+│   • Clean separation of concerns                       │
+│   • Each layer has single responsibility               │
+└─────────────────────────────────────────────────────────┘
+
+Key Points to Say:
+"The application uses a 4-layer architecture:
+- CLI handles user interaction
+- TaskManager orchestrates business logic
+- Task model manages state
+- TaskStorage handles persistence to JSON
+
+This separation makes the code maintainable and testable."
+
+Slide 3: Feature 1 - Task Creation (1 minute)
+┌─────────────────────────────────────────────────────────┐
+│         TASK CREATION FLOW                              │
+│                                                         │
+│   User Command:                                         │
+│   python cli.py create "Buy milk" -p 3 -d "2024-12-25" │
+│                                                         │
+│   Flow:                                                 │
+│   1. CLI parses arguments                              │
+│   2. TaskManager validates inputs                      │
+│      • Converts priority 3 → TaskPriority.HIGH         │
+│      • Parses date string → datetime object            │
+│   3. Task object created with UUID                     │
+│   4. Storage saves immediately to JSON                 │
+│                                                         │
+│   Key Insight:                                          │
+│   ✅ Enums for type safety (can't use invalid priority) │
+│   ✅ Immediate persistence (no data loss)               │
+└─────────────────────────────────────────────────────────┘
+
+What to Say:
+"Task creation shows good validation practices. The system converts 
+user input to type-safe enums - you can't accidentally set priority 
+to 5 because TaskPriority only allows 1-4. Every task gets a unique 
+UUID and is immediately saved to disk."
+
+Slide 4: Feature 2 - Prioritization System (1 minute)
+┌─────────────────────────────────────────────────────────┐
+│         TASK PRIORITIZATION                             │
+│                                                         │
+│   Priority Levels:                                      │
+│   1 = LOW    (!)                                       │
+│   2 = MEDIUM (!!)   ← Default                          │
+│   3 = HIGH   (!!!)                                     │
+│   4 = URGENT (!!!!)                                    │
+│                                                         │
+│   Storage Strategy:                                     │
+│   • In memory: TaskPriority.HIGH (enum)                │
+│   • In JSON: 3 (integer)                               │
+│   • Conversion handled by TaskEncoder/Decoder          │
+│                                                         │
+│   Operations:                                           │
+│   • Create with priority                               │
+│   • Update priority                                    │
+│   • Filter by priority                                 │
+│   • View statistics                                    │
+└─────────────────────────────────────────────────────────┘
+
+What to Say:
+"The priority system uses enums for type safety in Python but stores 
+as integers in JSON. This gives us the best of both worlds - readable 
+code and efficient storage. The TaskEncoder/Decoder handles all the 
+conversions automatically."
+
+Slide 5: Feature 3 - Task Completion (1 minute)
+┌─────────────────────────────────────────────────────────┐
+│         TASK COMPLETION (Special Case!)                 │
+│                                                         │
+│   Why "done" is special:                                │
+│                                                         │
+│   Regular status update:                                │
+│   • Changes status                                      │
+│   • Updates updated_at timestamp                       │
+│                                                         │
+│   Marking as "done":                                    │
+│   • Changes status                                      │
+│   • Updates updated_at timestamp                       │
+│   • Sets completed_at timestamp ⭐                      │
+│                                                         │
+│   Business Significance:                                │
+│   Completion is tracked separately because it's a       │
+│   significant business event - used for analytics       │
+│   like "tasks completed this week"                      │
+└─────────────────────────────────────────────────────────┘
+
+What to Say:
+"Here's something interesting: marking a task as 'done' has special 
+handling. Unlike other status changes, completion gets its own 
+timestamp. This shows how the code reflects business logic - 
+completion is final and significant, worth tracking separately."
+
+Slide 6: Design Pattern Discovery (1 minute)
+┌─────────────────────────────────────────────────────────┐
+│         INTERESTING DESIGN PATTERN                      │
+│                                                         │
+│   Repository Pattern with Custom Serialization          │
+│                                                         │
+│   TaskStorage acts as repository:                       │
+│   • Abstracts persistence details                      │
+│   • All CRUD operations centralized                    │
+│   • Business logic doesn't know about JSON             │
+│                                                         │
+│   Custom JSON Encoding:                                 │
+│   • TaskEncoder: Python objects → JSON                 │
+│   • TaskDecoder: JSON → Python objects                 │
+│   • Handles enums, datetimes, custom objects           │
+│                                                         │
+│   Trade-off:                                            │
+│   ✅ Simple and easy to understand                      │
+│   ❌ Full file rewrite on every change (inefficient)    │
+│   ❌ No transaction support (can lose data)             │
+└─────────────────────────────────────────────────────────┘
+
+What to Say:
+"The repository pattern with custom serialization is elegant but 
+has trade-offs. TaskStorage completely hides JSON details from the 
+rest of the app. But it rewrites the entire file on every change - 
+simple to implement but inefficient for large datasets."
+
+Slide 7: The AI-Assisted Learning Process (1 minute)
+┌─────────────────────────────────────────────────────────┐
+│         MY LEARNING JOURNEY WITH AI                     │
+│                                                         │
+│   Challenges Faced:                                     │
+│   ❌ Confused priority (integers) with dates (ISO)      │
+│   ❌ Didn't understand why "done" was special           │
+│   ❌ Struggled to see the full data flow                │
+│                                                         │
+│   How AI Helped:                                        │
+│   ✅ Generated guided questions to explore              │
+│   ✅ Created visual diagrams of data flow               │
+│   ✅ Explained "why" not just "what"                    │
+│   ✅ Caught my misconceptions early                     │
+│                                                         │
+│   Key Insight:                                          │
+│   "Don't just read code - trace it, question it,        │
+│    and map it. AI is great for generating the           │
+│    right questions to ask."                             │
+└─────────────────────────────────────────────────────────┘
+
+What to Say:
+"I initially confused how priorities and dates were stored. AI helped 
+by generating specific questions that forced me to look at the actual 
+code. Instead of just explaining, it guided me to discover the answers 
+myself - which made them stick."
+
+Slide 8: Key Takeaways (30 seconds)
+┌─────────────────────────────────────────────────────────┐
+│         WHAT I LEARNED                                  │
+│                                                         │
+│   Technical:                                            │
+│   • Layered architecture separates concerns            │
+│   • Enums provide type safety                          │
+│   • Special cases (like completion) reflect business   │
+│   • Persistence strategies have trade-offs             │
+│                                                         │
+│   Process:                                              │
+│   • AI works best for guided discovery                 │
+│   • Visual diagrams clarify complex flows              │
+│   • Understanding "why" > memorizing "what"            │
+│                                                         │
+│   Next Steps:                                           │
+│   • Identify failure points and add error handling     │
+│   • Consider atomic writes for data safety             │
+│   • Maybe add concurrency control                      │
+└─────────────────────────────────────────────────────────┘
+
+Closing:
+"Understanding existing code isn't just about reading it - it's 
+about mapping flows, questioning decisions, and discovering patterns. 
+AI made this exploration structured and thorough. Thanks!"
+
+PRESENTATION SCRIPT (Full Version)
+Here's a complete script you can practice, weiwei:
+
+FULL PRESENTATION SCRIPT (4-5 minutes)
+[SLIDE 1 - Title]
+"Good [morning/afternoon]! Today I'm going to share how I used AI to understand an existing codebase - specifically, a Python task management system.
+Instead of just reading through the code, I took a structured approach: mapping data flows, discovering design patterns, and understanding the 'why' behind architectural decisions. Let me walk you through what I learned."
+
+[SLIDE 2 - Architecture]
+"First, the high-level architecture. This application uses a clean 4-layer design:
+At the top, we have the CLI layer that handles user interaction. Below that, the TaskManager provides business logic and orchestration. The Task model manages state and behavior. And finally, TaskStorage handles all persistence to a JSON file.
+This separation of concerns makes the code maintainable and testable - each layer has a single, clear responsibility."
+
+[SLIDE 3 - Task Creation]
+"Let me show you how these layers work together with task creation.
+When a user runs a command like 'create Buy milk with priority 3', here's what happens:
+The CLI parses the arguments. TaskManager validates the inputs - it converts the number 3 into a TaskPriority.HIGH enum, and parses the date string into a datetime object. Then a Task object is created with a unique UUID. Finally, TaskStorage immediately saves it to the JSON file.
+What's interesting here is the use of enums for type safety. You can't accidentally set priority to 5 because TaskPriority only allows values 1 through 4. And with immediate persistence, there's no risk of losing unsaved changes."
+
+[SLIDE 4 - Prioritization]
+"The prioritization system shows a clever design choice.
+We have four priority levels: LOW, MEDIUM - which is the default - HIGH, and URGENT. In Python code, these are represented as enums like TaskPriority.HIGH. But in the JSON file, they're stored as simple integers - 1, 2, 3, 4.
+This gives us the best of both worlds: readable, type-safe code, and efficient storage. The conversion happens automatically through custom TaskEncoder and TaskDecoder classes.
+You can create tasks with a priority, update it later, filter your task list by priority, or view statistics showing how many tasks you have at each level."
+
+[SLIDE 5 - Task Completion]
+"Now here's something really interesting I discovered: marking a task as 'done' has special handling.
+For a regular status update - say, changing from TODO to IN_PROGRESS - the system just updates the status and the updated_at timestamp.
+But when you mark a task as done, it does something extra: it sets a completed_at timestamp. This field is only set once, when the task is finished.
+Why is this special? Because completion is a significant business event. The system uses this timestamp for analytics - like 'how many tasks did I complete this week?' The code structure reflects the business logic: completion is final and important, worth tracking separately from other status changes."
+
+[SLIDE 6 - Design Pattern]
+"The most interesting design pattern I found was the Repository pattern combined with custom JSON serialization.
+TaskStorage acts as a repository - it completely abstracts away all the persistence details. The rest of the application has no idea that data is stored in JSON. All CRUD operations are centralized in this one class.
+The custom encoding is elegant: TaskEncoder converts Python objects to JSON, handling enums, datetimes, and custom objects. TaskDecoder does the reverse.
+But here's the trade-off: this implementation rewrites the entire file on every change. It's simple and easy to understand, but inefficient for large datasets. And there's no transaction support - if a write fails, you could lose data.
+This taught me that every design choice has trade-offs. Simplicity often comes at the cost of performance or robustness."
+
+[SLIDE 7 - AI Process]
+"Let me share my learning process and how AI helped.
+I faced several challenges. Initially, I confused how priorities and dates were stored - I thought both used ISO strings. I didn't understand why marking a task 'done' had special handling. And I struggled to visualize how data flowed through all these layers.
+Here's how AI helped: Instead of just explaining the answers, it generated guided questions that forced me to examine the actual code. Questions like 'How is priority stored in JSON?' or 'What fields change when you mark a task done?'
+It also created visual diagrams showing data flow from user command all the way to disk persistence. And crucially, it explained the 'why' - not just what the code does, but why it's designed that way.
+The AI caught my misconceptions early by asking me to explain my understanding, then correcting specific errors.
+My key insight: Don't just read code - trace it, question it, and map it. AI is excellent at generating the right questions to guide your exploration."
+
+[SLIDE 8 - Takeaways]
+"So what did I learn?
+Technically: Layered architecture really does help separate concerns. Enums provide valuable type safety. Special cases in the code often reflect important business logic. And persistence strategies always involve trade-offs between simplicity and robustness.
+About the process: AI works best for guided discovery, not just answers. Visual diagrams clarify complex flows that prose can't capture. And understanding 'why' decisions were made is more valuable than just memorizing 'what' the code does.
+If I were to improve this system, I'd add better error handling for the identified failure points, consider atomic writes for data safety, and maybe add some concurrency control.
+Understanding existing code isn't just about reading it - it's about mapping flows, questioning decisions, and discovering patterns. AI made this exploration structured, thorough, and honestly, a lot more effective than I could have done alone.
+Thank you!"
+
+PRACTICE TIPS
+Timing Breakdown:
+
+Intro: 30 seconds
+Architecture: 45 seconds
+Task Creation: 50 seconds
+Prioritization: 50 seconds
+Completion: 50 seconds
+Design Pattern: 50 seconds
+AI Process: 50 seconds
+Takeaways: 30 seconds
+Total: ~5 minutes
+
+Delivery Tips:
+
+Don't read slides - they're visual aids
+Use your hands - point to diagrams
+Pause between slides - let ideas sink in
+Make eye contact - engage your audience
+Practice the transitions - smooth flow between topics
+Have a backup - if short on time, skip one feature
+
+What to Emphasize:
+
+Your discovery process (not just facts)
+The "why" behind design choices
+How AI guided your learning
+Trade-offs you discovered
+
+
+BACKUP: Quick 3-Minute Version
+If you need to cut it down:
+Keep:
+
+Slide 1 (Intro)
+Slide 2 (Architecture)
+Slide 5 (Completion - most interesting)
+Slide 6 (Design Pattern)
+Slide 7 (AI Process)
+Slide 8 (Takeaways)
+
+Skip:
+
+Slide 3 (Task Creation)
+Slide 4 (Prioritization)
+
+
+REFLECTION QUESTIONS FOR YOUR JOURNAL
+Before the presentation, reflect on:
+
+What surprised you most about the codebase?
+
+The special handling for "done" status
+How enums simplify type safety
+The trade-offs in the persistence strategy
+
+
+What was your biggest misconception?
+
+Confusing priority storage (int) with date storage (ISO string)
+Not understanding why "done" was special
+
+
+How did your approach change during the exercise?
+
+Started trying to understand everything at once
+Learned to focus on specific flows (creation, updates)
+Used guided questions instead of just reading
+
+
+What would you do differently next time?
+
+Start with data flow diagrams immediately
+Ask more "why" questions earlier
+Test code while reading it
+
+
+How effective was AI as a learning partner?
+
+Very effective for generating questions
+Great for visual diagrams
+Caught misconceptions quickly
+Better than reading alone
+
+
+
+
+
+"When you use Instagram/TikTok/WhatsApp and create a post, what happens?"
+
+They'll say things like:
+
+"I tap the + button" ← That's CLI!
+"I type my caption" ← That's input!
+"The app checks if my photo is too big" ← That's TaskManager validation!
+"It saves to my profile" ← That's TaskStorage!
+"Each post has a unique link" ← That's UUID!
+
+
+TESTING SUMMARY - Quick Reference
+
+HOW TO RUN TESTS
+Method 1: Run specific test file
+bashpython -m unittest tests.test_basic -v
+Method 2: Discover and run all tests
+bashpython -m unittest discover -s tests -v
+Method 3: Run without verbose output
+bashpython -m unittest discover -s tests
+```
+
+---
+
+## **SUCCESSFUL TEST OUTPUT**
+```
+test_simple (tests.test_basic.TestBasic)
+A simple test to verify testing works ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+OK
+
+IF YOU GET "Ran 0 tests"
+Check 1: Does test file have content?
+bashcat tests/test_basic.py
+wc -l tests/test_basic.py
+If empty (0 lines): Add test code ⬇️
+
+ADDING TEST CODE TO EMPTY FILE
+bashcat > tests/test_basic.py << 'EOF'
+import unittest
+
+class TestBasic(unittest.TestCase):
+    def test_simple(self):
+        """A simple test to verify testing works"""
+        self.assertEqual(1 + 1, 2)
+
+if __name__ == '__main__':
+    unittest.main()
+EOF
+
+VERIFY IT WORKED
+bash# Check file has content
+cat tests/test_basic.py
+
+# Run test
+python -m unittest tests.test_basic -v
+
+KEY REQUIREMENTS
+✅ tests/ folder exists
+✅ tests/__init__.py exists (can be empty)
+✅ Test files start with test_*.py
+✅ Test class inherits from unittest.TestCasT
+✅ Test methods start with test_
+
+QUICK TROUBLESHOOTING
+ProblemSolution"Start directory is not importable"Create tests/__init__.py"Ran 0 tests"Check if test file is emptyTest file emptyAdd test code using cat > command above
