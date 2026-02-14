@@ -1,4 +1,4 @@
-what if i do it like this > tests/test_task_parser.py << 'EOF'                                                   Task Manager Code Understanding Journal
+  Task Manager Code Understanding Journal
 
 Part 1 — Task Creation & Status Updates
 
